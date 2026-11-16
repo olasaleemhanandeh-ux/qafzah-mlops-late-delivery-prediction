@@ -1,97 +1,248 @@
-# Qafzah Task 3 - MLOps Late Delivery Prediction Pipeline
+# Qafza — MLOps Late Delivery Prediction Pipeline
 
-An end-to-end MLOps pipeline for predicting late delivery risks in e-commerce orders. Built with Scikit-Learn, MLflow, Great Expectations, FastAPI, and Docker.
+An end-to-end **MLOps pipeline** for predicting late deliveries in e-commerce orders using the **Olist Brazilian E-Commerce Dataset**.
 
----
+This project transforms a machine learning workflow into a structured, production-oriented pipeline covering data validation, feature engineering, model management, inference, API development, automated testing, and deployment.
 
-## Project Architecture & Pipeline
-1. **Data Validation**: Great Expectations suites for input validation.
-2. **Model Tracking & Registry**: MLflow tracking server and model registry (`LateDeliveryModel`).
-3. **Automated Testing**: Complete test suite using `pytest` covering preprocessing, prediction, and API routes (13/13 passing).
-4. **API & Containerization**: FastAPI app containerized using Docker and Docker Compose.
+**Tech Stack:** Python · Scikit-learn · Pandas · Great Expectations · MLflow · FastAPI · Pydantic · Docker · Docker Compose · DVC · Pytest · GitHub Actions
 
 ---
 
-## Quick Start Guide
+## Project Overview
 
-### 1. Run Unit & Integration Tests
+The objective is to predict whether an e-commerce order will be delivered late or on time.
+
+The target variable is:
+
+| Value | Meaning |
+|---|---|
+| `0` | On-time delivery |
+| `1` | Late delivery |
+
+The project focuses on transforming a notebook-based machine learning workflow into a reusable and deployable MLOps pipeline.
+
+## MLOps Pipeline
+
+### 1. Data Management & Versioning
+- Organized dataset artifacts under `data/artifacts/`.
+- Used DVC to track data artifacts and support reproducibility.
+- Centralized project configuration in `config/config.yaml`.
+
+### 2. Data Validation
+Implemented data validation using **Great Expectations**, including:
+- Schema and column validation.
+- Data type checks.
+- Missing-value validation.
+- Categorical value validation.
+- Numerical range checks.
+- Target value validation.
+
+### 3. Feature Engineering
+- Extracted reusable feature engineering logic from the notebooks.
+- Created time-based features from order timestamps.
+- Integrated geolocation features.
+- Prepared numerical and categorical features.
+- Maintained consistent feature preparation for inference.
+
+### 4. Model Management
+- Used a Scikit-learn Random Forest Classifier.
+- Applied class weighting to address class imbalance.
+- Used a saved model and preprocessing pipeline for inference.
+- Integrated MLflow for experiment tracking and model registration.
+
+### 5. Prediction Service
+- Implemented a reusable prediction module.
+- Loaded the saved model and preprocessor.
+- Applied a configurable classification threshold of `0.51`.
+- Returned prediction results and probabilities.
+
+### 6. API Development
+Developed a REST API using **FastAPI** and **Pydantic**.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health` | API health check |
+| `POST` | `/predict` | Predicts delivery status |
+
+Interactive API documentation is available through Swagger UI at:
+
+`http://localhost:8000/docs`
+
+### 7. Automated Testing
+Implemented automated tests using **Pytest**, covering:
+- Feature engineering.
+- Prediction functionality.
+- API endpoints.
+
+**Latest recorded test result:** 13 passed.
+
+### 8. Deployment & CI/CD
+- Dockerfile for containerization.
+- Docker Compose for service orchestration.
+- GitHub Actions workflow for automated project checks.
+
+---
+
+## Model Evaluation
+
+The recorded F1 scores from the existing model evaluation:
+
+| Evaluation Set | F1 Score |
+|---|---:|
+| Validation | 0.1909 |
+| Test | 0.0582 |
+
+---
+
+## Getting Started
+
+### 1. Clone the Repository
+
 ```bash
-pytest
+git clone <YOUR_REPOSITORY_URL>
+cd Qafzah_Task2
+```
 
-### 2. Run with Docker Compose
-Bash
+### 2. Create a Virtual Environment
 
+```bash
+python -m venv .venv
+```
+
+Activate it:
+
+**Linux / macOS**
+```bash
+source .venv/bin/activate
+```
+
+**Windows**
+```bash
+.venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+For development:
+
+```bash
+pip install -r requirements/dev.txt
+```
+
+For runtime:
+
+```bash
+pip install -r requirements/runtime.txt
+```
+
+### 4. Run Data Validation
+
+```bash
+python -m src.validation.great_expectations
+```
+
+### 5. Run Automated Tests
+
+```bash
+pytest -v
+```
+
+### 6. Start the API
+
+```bash
+uvicorn src.api:app --host 0.0.0.0 --port 8000
+```
+
+Access the API documentation:
+
+`http://localhost:8000/docs`
+
+### 7. Run with Docker Compose
+
+```bash
 docker compose up -d --build
+```
 
-## API Endpoints
-🟢 Health Check
+To stop the services:
 
-    GET http://localhost:8000/health
+```bash
+docker compose down
+```
 
-🔮 Make Predictions
+---
 
-    POST http://localhost:8000/predict
+## Project Structure
 
-    Request Payload Example:
+```text
+Qafzah_Task2/
+│
+├── .dvc/
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+│
+├── config/
+│   └── config.yaml
+│
+├── data/
+│   ├── artifacts/
+│   ├── .gitignore
+│   └── artifacts.dvc
+│
+├── notebooks/
+│   ├── 01_read_join.ipynb
+│   ├── 02_create_labels.ipynb
+│   ├── 03_split.ipynb
+│   ├── 04_eda.ipynb
+│   ├── 05_feature_engineering.ipynb
+│   └── 06_modeling.ipynb
+│
+├── requirements/
+│   ├── dev.txt
+│   └── runtime.txt
+│
+├── src/
+│   ├── validation/
+│   │   ├── __init__.py
+│   │   └── great_expectations.py
+│   │
+│   ├── __init__.py
+│   ├── api.py
+│   ├── feature_engineering.py
+│   ├── predict.py
+│   └── register_model.py
+│
+├── tests/
+│   ├── test_api.py
+│   ├── test_feature_engineering.py
+│   └── test_predictor.py
+│
+├── .dockerignore
+├── .dvcignore
+├── .gitignore
+├── Dockerfile
+├── docker-compose.yml
+├── pytest.ini
+└── README.md
+```
 
-JSON
+---
 
-{
-  "order": {
-    "Type": "DEBIT",
-    "Days for shipping (real)": 3,
-    "Days for shipment (scheduled)": 4,
-    "Benefit per order": 29.25,
-    "Sales per customer": 300.0,
-    "Delivery Status": "Advance shipping",
-    "Late_delivery_risk": 0,
-    "Category Id": 73,
-    "Category Name": "Sporting Goods",
-    "Customer City": "Caguas",
-    "Customer Country": "Puerto Rico",
-    "Customer Segment": "Consumer",
-    "Customer Zipcode": 725,
-    "customer_zip_code_prefix": 725,
-    "customer_state": "PR",
-    "Department Id": 2,
-    "Department Name": "Fitness",
-    "Market": "Pacific Asia",
-    "Order City": "Bekasi",
-    "Order Country": "Indonesia",
-    "Order Item Discount": 0.0,
-    "Order Item Discount Rate": 0.0,
-    "Order Item Product Price": 327.75,
-    "Order Item Profit Ratio": 0.09,
-    "Order Item Quantity": 1,
-    "Sales": 327.75,
-    "Order Item Total": 327.75,
-    "Order State": "Jawa Barat",
-    "Product Category Id": 73,
-    "Product Price": 327.75,
-    "Shipping Mode": "Standard Class",
-    "order_purchase_timestamp": "2018-01-31 08:00:00",
-    "order_approved_at": "2018-01-31 08:30:00",
-    "order_delivered_carrier_date": "2018-02-01 10:00:00",
-    "order_delivered_customer_date": "2018-02-03 14:00:00",
-    "order_estimated_delivery_date": "2018-02-04 00:00:00",
-    "shipping_limit_date": "2018-02-02 00:00:00",
-    "total_items": 1,
-    "total_price": 327.75,
-    "total_freight": 15.50,
-    "unique_products": 1,
-    "unique_sellers": 1,
-    "total_payments": 343.25,
-    "payment_count": 1,
-    "payment_types": 1
-  }
-}
+## Key Learning Outcomes
 
-## Repository Structure
+- Transforming notebook-based ML workflows into reusable Python modules.
+- Building an end-to-end inference pipeline.
+- Implementing data validation with Great Expectations.
+- Managing data artifacts using DVC.
+- Integrating MLflow for experiment tracking and model management.
+- Developing REST APIs using FastAPI and Pydantic.
+- Writing automated tests with Pytest.
+- Containerizing applications with Docker.
+- Implementing CI/CD workflows using GitHub Actions.
 
-    src/: Data validation, model registration, and FastAPI code.
+---
 
-    tests/: Automated unit and API tests.
+## Acknowledgment
 
-    requirements/: Dependencies (runtime.txt & dev.txt).
-
-    Dockerfile & docker-compose.yml: Deployment configurations.
+Developed as part of **Qafza Training**, applying MLOps concepts and practices to build an end-to-end machine learning pipeline.
